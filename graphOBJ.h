@@ -178,10 +178,11 @@ public:
 	int height = 100;
 	Plane()
 	{
-		setPriority(200);
+		setPriority(Pri::Highest);
+		area.setArea(300, 300, 60, 60);
 		moveto(300, 300);
 		area.setOffset(-50, -50);
-		area.setArea(300, 300, 100, 100);
+		
 		onclick = [=](int b, int s, int x, int y)
 		{
 			this->setPriority(Pri::Highest);
@@ -229,6 +230,8 @@ public:
 		glEnd();
 		canvas.setColor(0, 255, 0);
 		fillRect(posx-25, posy+60, HP / 200, 5);
+		canvas.setColor(0, 0, 255);
+		canvas.drawCircle(posx, posy, 30);
 	}
 };
 

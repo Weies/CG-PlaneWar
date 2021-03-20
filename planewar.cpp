@@ -24,7 +24,7 @@ void display()
 			if (enemy.HP < 0)
 			{
 				enemy.HP = 1000;
-				enemy.moveto(rand() % 500 + 50, rand() % 400 + 200);
+				enemy.moveto(rand() % win_width + 50, rand() % (win_height - 300) + 300);
 			}
 		}
 	}
@@ -58,7 +58,7 @@ int toshot = 0;
 void timer()
 {
 	++toshot;
-	if (toshot % 3 == 0)
+	if (toshot % 2 == 0)
 	{
 		hisbullet.push_back(bullets(enemy.posx - 3, enemy.posy - 58));
 	}
@@ -84,11 +84,17 @@ int main()
 	Button btn("Start");
 	btn.moveto(500, 10);
 	bool start = false;
+
 	btn.onclick = [=, &start](int b, int s, int x, int y)
 	{
 		if (!start)
+		{
 			canvas.setTimer(20, timer, 10);
-		start = true;
+			start = true;
+			mouseHoverHandler = [=](int x, int y) {
+				plane.moveto(x, y);
+			};
+		}
 	};
 	btn.setMovable(false);
 

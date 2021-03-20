@@ -4,6 +4,61 @@
 using namespace std;
 using namespace globals;
 
+HHOOK keyHook = NULL;
+HHOOK mouseHook = NULL;
+//声明卸载函数,以便调用
+bool lock = true;
+void unHook();
+//键盘钩子过程
+void setHook();
+
+namespace events {
+	void doWhenMouseHover(int x, int y);
+}
+
+
+LRESULT CALLBACK keyProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	//在WH_KEYBOARD_LL模式下lParam 是指向KBDLLHOOKSTRUCT类型地址
+	KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)lParam;
+	if (pkbhs->vkCode == VK_F12 && lock == true)
+	{
+		unHook(); lock = false;
+		//qApp->quit();
+	}
+	else
+	{
+		setHook(); lock = true;
+	}
+	return 0;//返回1表示截取消息不再传递,返回0表示不作处理,消息继续传递
+}
+
+
+LRESULT CALLBACK mouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	MSLLHOOKSTRUCT* info = (MSLLHOOKSTRUCT*)lParam;
+	events::doWhenMouseHover(0.8*info->pt.x - glutGet(GLUT_WINDOW_X)
+		, 0.8*info->pt.y - glutGet(GLUT_WINDOW_Y));
+	return 0;
+}
+
+//卸载钩子
+void unHook()
+{
+	UnhookWindowsHookEx(keyHook);
+	UnhookWindowsHookEx(mouseHook);
+}
+//安装钩子,调用该函数即安装钩子
+
+void setHook()
+{
+	//这两个底层钩子,不要DLL就可以全局
+	//                         底层键盘钩子
+	keyHook = SetWindowsHookEx(WH_KEYBOARD_LL, keyProc, GetModuleHandle(NULL), 0);
+	//                          底层鼠标钩子
+	mouseHook = SetWindowsHookEx(WH_MOUSE_LL, mouseProc, GetModuleHandle(NULL), 0);
+}
+
 namespace events {
 	bool cmp(BasicGraphObject* a1, BasicGraphObject* a2)
 	{
@@ -50,6 +105,7 @@ namespace events {
 	function<void(int b, int state, int x, int y)> mouseClickHandler = 0;
 	function<void(int x, int y)> mouseMoveHandler = 0;
 	function<void(int b, int state, int x, int y)> mouseStickHandler;
+	function<void(int x, int y)> mouseHoverHandler = 0;
 
 	function<void(int x, int y)>  reshapeFunc = 0;
 
@@ -160,6 +216,12 @@ namespace events {
 				keyUpFunc(key, x, y);
 		}
 
+	}
+
+	void doWhenMouseHover(int x,int y)
+	{
+		if (mouseHoverHandler)
+			mouseHoverHandler(x,win_height- y);
 	}
 
 	void doWhenTimeout(int id)

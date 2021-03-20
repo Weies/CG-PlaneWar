@@ -10,6 +10,7 @@ public:
 		win_width = ww;
 		win_height = hh;
 		init();
+		setHook();
 	}
 	void setColor(float r, float g, float b, float a = 0)
 	{
@@ -86,6 +87,9 @@ public:
 	void setMouseStick(void handler(int b, int state, int x, int y))
 	{
 		mouseStickHandler = handler;
+	}
+	void setMouseHover(void handler(int x, int y)) {
+		mouseHoverHandler = handler;
 	}
 
 	void setKeyFunc(function<void(unsigned char key, int x, int y)> func)
@@ -166,13 +170,27 @@ void Canvas::drawLine(int xx, int yy, int ex, int ey)
 	glEnd();
 }
 
-void Canvas::drawCircle(int xx, int yy, int rr)
+void Canvas:: drawCircle(int xx, int yy, int rr)
 {
+	float r = rr;
+	float y = yy;
+	float x = xx;
+	int startpos = x - sqrt(2) / 2 * r;
+	int endpos = x + sqrt(2) / 2 * r;
+	int startposY = y - sqrt(2) / 2 * r;
+	int endposY = y + sqrt(2) / 2 * r;
 	glBegin(GL_POINTS);
-	for (int i = xx - rr; i < xx + rr; i++)
+	for (int i = startpos; i <= endpos; i++)
 	{
-		glPixel(sqrt(rr * rr - xx * xx), yy);
-		glPixel(sqrt(rr * rr - xx * xx), -yy);
+		float py = sqrt(r * r - i * i + 2 * x * i - x * x);
+		glPixel(i, round(py + y));
+		glPixel(i, round(-py + y));
+	}
+	for (int i = startposY; i <= endposY; i++)
+	{
+		float px = sqrt(r * r - i * i + 2 * y * i - y * y);
+		glPixel(round(px + x), i);
+		glPixel(round(-px + x), i);
 	}
 	glEnd();
 }
