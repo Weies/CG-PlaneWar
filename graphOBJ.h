@@ -1,8 +1,7 @@
 #pragma once
 #include"graphBasic.h"
 #include"canvas.h"
-
-
+#include"painter.h"
 class Circle :public MovableObject {
 public:
 	float r;//°ë¾¶
@@ -17,6 +16,10 @@ public:
 		area.w = 2 * r;
 		area.h = 2 * r;
 		area.setOffset(-r, -r);
+		onmove = [=](int x, int y) {
+			moveto(x, y);
+		};
+
 		setColor(255, 65, 20);
 	}
 
@@ -28,15 +31,21 @@ public:
 	void draw()
 	{
 		canvas.setColor(co);
+		int delta = r * scaleTimes;
+		int rr = r * r * scaleTimes * scaleTimes;
+		int x = posx * scaleTimes;
+		int y = posy * scaleTimes;
 		glBegin(GL_POINTS);
-		for (int i = posx - r; i < posx + r; i++)
+		useScale = false;
+		for (int i = -delta; i < delta; i++)
 		{
-			for (int j = posy - r; j < posy + r; j++)
+			for (int j =-delta; j <delta; j++)
 			{
-				if ((i - posx) * (i - posx) + (j - posy) * (j - posy) < r * r)
-					glPixel(i, j);
+				if (i*i+j*j< rr)
+					glPixel(x+i, y+j);
 			}
 		}
+		useScale = true;
 		glEnd();
 	}
 
@@ -64,6 +73,9 @@ public:
 		area.setOffset(-100, -100);
 		area.setArea(xx, yy, 200, 200);
 		setColor(120, 160, 240);
+		onmove = [=](int x, int y) {
+			moveto(x, y);
+		};
 	}
 
 	void rotate(float deg) {
@@ -91,12 +103,12 @@ public:
 private:
 };
 
-class Rectangle :public MovableObject
+class Rect :public MovableObject
 {
 public:
 	int width; int height;//×óÉÏ½ÇµÄÎ»ÖÃ
-
-	Rectangle(float xx, float yy, float w, float h) {
+	
+	Rect(float xx, float yy, float w, float h) {
 		posx = xx; posy = yy; height = h; width = w;
 		area.setArea(xx, yy, w, h);
 		setColor(0, 255, 0);
@@ -110,27 +122,19 @@ public:
 			resetPri();
 		};
 	}
-
+	
 	void draw()
 	{
 		canvas.setColor(co);
-		glBegin(GL_POINTS);
-		for (int i = posx; i < posx + width; i++)
-		{
-			for (int j = posy; j < posy + height; j++)
-			{
-				glPixel(i, j);
-			}
-		}
-		glEnd();
+		painter.fillRect(posx,posy,width,height);
 	}
 };
 
-class Line :public FixedObject {
+class LineOBJ :public FixedObject {
 public:
 	float ex;
 	float ey;
-	Line(float xx, float yy, float endx, float endy) {
+	LineOBJ(float xx, float yy, float endx, float endy) {
 		posx = xx; posy = yy; ex = endx; ey = endy;
 		setColor(255, 0, 0);
 	}
@@ -145,17 +149,44 @@ public:
 	}
 };
 
-
-
+template<class T>
+class CirList {
+public:
+	CirList(int n):list(n){
+		maxSize = n;
+	}
+	void push_back(const T& t)
+	{
+		curr++;
+		if (curr == maxSize)curr = 0;
+		list[curr] = t;
+	}
+	T& operator[](int i)
+	{
+		if(i+curr<maxSize)
+		return list[curr+i];
+		return list[curr + i -maxSize];
+	}
+	int size()
+	{
+		return list.size();
+	}
+	int curr = 0;
+	int maxSize;
+	vector<T> list;
+};
 
 class bullets {
 public:
+	bullets(){}
+
 	bullets(float xx, float yy)
 	{
 		x = xx; y = yy;
 		dx = (rand() % 10000-5000)/500.0;
 		dy = (rand() % 10000-5000) / 500.0;
 	}
+
 	float X()
 	{
 		return x += dx;
@@ -168,12 +199,12 @@ public:
 	float dx;
 	float dy;
 };
-vector<point> mybullet;
-vector<bullets> hisbullet;
+CirList<point> mybullet(3000);
+CirList<bullets> hisbullet(3000);
 
 class Plane :public MovableObject {
 public:
-	int HP = 10000;
+	int HP = 5000;
 	int width = 100;
 	int height = 100;
 	Plane()
@@ -187,9 +218,11 @@ public:
 		{
 			this->setPriority(Pri::Highest);
 		};
+
 		onmove = [=](int x, int y) {
-			moveto(x, y);
+			moveto(x , y);
 		};
+
 		onmouseup = [=](int b, int x, int y) {
 			resetPri();
 		};
@@ -229,9 +262,9 @@ public:
 		glPixel(posx, posy + 50);
 		glEnd();
 		canvas.setColor(0, 255, 0);
-		fillRect(posx-25, posy+60, HP / 200, 5);
+		pntr.fillRect(posx-25, posy+60, HP / 100, 5);
 		canvas.setColor(0, 0, 255);
-		canvas.drawCircle(posx, posy, 30);
+		painter.drawCircle(posx, posy, 30);
 	}
 };
 
@@ -261,6 +294,6 @@ public:
 		glPixel(posx, posy - 50);
 		glEnd();
 		canvas.setColor(255, 0, 0);
-		fillRect(posx - 25, posy - 70, HP / 20, 5);
+		pntr.fillRect(posx - 25, posy - 70, HP / 20, 5);
 	}
 };

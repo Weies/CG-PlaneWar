@@ -5,6 +5,7 @@
 #include<vector>
 #include<map>
 #include<algorithm>
+#define WIN32_LEAN_AND_MEAN 
 #include<windows.h>
 using namespace std;
 
@@ -16,9 +17,20 @@ namespace globals {
 	};
 	bool runing = true;
 	double M_PI = 3.14159265358979323846;   // pi
-	int win_width = 600;
-	int win_height = 600;
+	int win_w = 600;
+	int win_h = 600;
+	int pre_w = 600;
+	int pre_h = 600;
 	float scaleTimes = 1.0;
+	int win_height()
+	{
+		return win_h/scaleTimes;
+	}
+	int win_width()
+	{
+		return win_w/scaleTimes;
+	}
+
 	int timeDelay = 0;
 	bool eventAble = true;
 	//设置鼠标移动时更新鼠标按下的x,y坐标
@@ -28,18 +40,20 @@ namespace globals {
 	//平移的位置
 	float tX = -1.0; float tY = -1.0;
 	bool useScale = true;
+	int cOffsetx = 0;
+	int cOffsety = 0;
 	float transX(int x)
 	{
 		if (useScale)
-			return x * 2.0 * scaleTimes / win_width;
-		else return x * 2.0 / win_width;
+			return x*2.0*scaleTimes/win_w;
+		else return x*2.0/win_w;
 	}
 
 	float transY(int x)
 	{
 		if (useScale)
-			return x * 2.0 * scaleTimes / win_height;
-		else return x * 2.0 / win_height;
+			return x*2.0*scaleTimes/win_h;
+		else return x*2.0/win_h;
 	}
 	void glPixel(int x, int y)
 	{
@@ -53,42 +67,63 @@ namespace globals {
 	}
 	void debug(string s)
 	{
-		OutputDebugStringA((s + "\n").c_str());
+		OutputDebugStringA((s+"\n").c_str());
 	}
 	void debug(int s)
 	{
 		OutputDebugStringA((itos(s)+"\n").c_str());
 	}
 
+	void debugAll(const char* c, int l)
+	{
+		int j = 0; char cc[300] = {};
+		for (int i = 0; i<l; i++)
+		{
+			if (c[i]!='\0')
+			{
+				cc[j++] = c[i];
+			}
+		}
+		cc[j] = '\0';
+		OutputDebugStringA(cc);
+	}
+
 	void drawString(int x, int y, string s)
 	{
 		glRasterPos2f(transX(x), transY(y));
-		for (int i = 0; i < s.length(); i++)
+		for (int i = 0; i<s.length(); i++)
 		{
 			glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, s[i]);
 		}
 		glFlush();
 	}
 
-	struct Color {
+	class Color {
+	public:
+		Color() {
+			r = 0; g = 0; b = 0; a = 1;
+		}
 		Color(float rr, float gg, float bb) {
-			r = rr; g = gg; b = bb;
+			r = rr; g = gg; b = bb; a = 1;
+		}
+		Color(float rr, float gg, float bb, float aa) {
+			r = rr; g = gg; b = bb; a = 1; a = aa;
 		}
 		Color(const Color& c)
 		{
 			r = c.r; b = c.b;
-			g = c.g;
+			g = c.g; a = c.a;
 		}
 
 		Color(Color& c)
 		{
 			r = c.r; b = c.b;
-			g = c.g;
+			g = c.g; a = c.a;
 		}
 		void operator=(Color co)
 		{
 			r = co.r; b = co.b;
-			g = co.g;
+			g = co.g; a = co.a;
 		}
 		float r;
 		float g;
@@ -117,10 +152,15 @@ namespace globals {
 		{
 			co.r = r; co.g = g; co.b = b;
 		}
+		void setColor(float r, float g, float b, float alpha)
+		{
+			co.r = r; co.g = g; co.b = b; co.a = alpha;
+		}
 		void setColor(const Color& color)
 		{
 			co = color;
 		}
+
 	};
 
 }

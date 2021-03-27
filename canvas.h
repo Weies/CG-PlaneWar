@@ -2,47 +2,51 @@
 #include"events.h"
 using namespace events;
 
-void reshape(int w, int h);
+void _reshape(int w, int h);
 
 class Canvas {
 public:
 	Canvas(int ww, int hh, const Color& co = Color(255, 255, 255)) :backcolor(co) {
-		win_width = ww;
-		win_height = hh;
+		win_w = ww;
+		win_h = hh;
 		init();
-		setHook();
+		setHook(); 
 	}
-	void setColor(float r, float g, float b, float a = 0)
+
+	void setColor(float r, float g, float b, float a = 1)
 	{
+		co = Color(r, g, b, a);
 		glColor4f(r * 1.0 / 255, g * 1.0 / 255, b * 1.0 / 255, a);
 	}
-	void setColor(const Color& co) {
+	void setColor(const Color& c) {
+		co = c;
 		glColor4f(co.r * 1.0 / 255, co.g * 1.0 / 255, co.b * 1.0 / 255, co.a);
 	}
 	void setWindowSize(int ww, int hh)
 	{
-		win_width = ww;
-		win_height = hh;
-		glutReshapeWindow(win_width, win_height);
+		win_w = ww;
+		win_h = hh;
+		glutReshapeWindow(win_w, win_h);
 	}
 	void init() {
 		glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH);
 		glutInitWindowPosition(300, 100);
-		glutInitWindowSize(win_width, win_height);
+		glutInitWindowSize(win_w, win_h);
 		glutCreateWindow("Weies's Drawing");
 		glMatrixMode(GL_PROJECTION);
 		glTranslated(-1, -1, 0);
-		glViewport(0, 0, win_width, win_height);
+		glViewport(0, 0, win_w, win_h);
 		glutMotionFunc(doWhenMouseMove);
-		glutReshapeFunc(reshape);
+		glutReshapeFunc(_reshape);
 		glutMouseFunc(doWhenClick);
 		glutDisplayFunc(doWhenDisplay);
 	}
 
-	void setTimer(int delay, function<void()> timefunc, int id)
+	void setTimer(int delay, function<void()> timefunc, int id=0)
 	{
 		timeDelay = delay;
 		timerFunc = timefunc;
+		runing = true;
 		glutTimerFunc(delay, doWhenTimeout, id);
 	}
 	void killTimer()
@@ -53,7 +57,7 @@ public:
 	{
 		eventAble = false;
 	}
-	void setSingleTimer(int delay, function<void(int id)> timefunc, int id)
+	void setSingleTimer(int delay, function<void(int id)> timefunc, int id=0)
 	{
 		singleTimerFunc = timefunc;
 		glutTimerFunc(delay, doWhenSingleTimeout, id);
@@ -71,24 +75,24 @@ public:
 	void setReshapeFunc(void func(int w, int h))
 	{
 		reshapeFunc = func;
-		glutReshapeFunc(reshape);
+		glutReshapeFunc(_reshape);
 	}
 
-	void setMouseMove(void move(int x, int y))
+	void setMouseMove(function<void(int x, int y)>move)
 	{
 		mouseMoveHandler = move;
 		glutMotionFunc(doWhenMouseMove);
 	}
-	void setMouseClick(void move(int b, int state, int x, int y))
+	void setMouseClick(function<void(int b, int state, int x, int y)>move)
 	{
 		mouseClickHandler = move;
 		glutMouseFunc(doWhenClick);
 	}
-	void setMouseStick(void handler(int b, int state, int x, int y))
+	void setMouseStick(function<void(int b, int state, int x, int y)>handler)
 	{
 		mouseStickHandler = handler;
 	}
-	void setMouseHover(void handler(int x, int y)) {
+	void setMouseHover(function<void(int x, int y)>handler) {
 		mouseHoverHandler = handler;
 	}
 
@@ -113,9 +117,6 @@ public:
 	void update() {
 		glFlush();
 	}
-	void drawLine(int xx, int yy, int ex, int ey);
-	void drawRect(int xx, int yy, int ex, int ey);
-	void drawCircle(int xx, int yy, int rr);
 
 	void repaint()
 	{
@@ -149,60 +150,21 @@ public:
 	{
 		scaleTimes = s;
 	}
+	Color co;
 	Color backcolor;
 };
-void Canvas::drawRect(int xx, int yy, int ex, int ey)
-{
-	glBegin(GL_LINE_STRIP);
-	glPixel(xx, yy);
-	glPixel(xx, ey);
-	glPixel(ex, ey);
-	glPixel(ex, yy);
-	glPixel(xx, yy);
-	glEnd();
-}
 
-void Canvas::drawLine(int xx, int yy, int ex, int ey)
-{
-	glBegin(GL_LINES);
-	glPixel(xx, yy);
-	glPixel(ex, ey);
-	glEnd();
-}
-
-void Canvas:: drawCircle(int xx, int yy, int rr)
-{
-	float r = rr;
-	float y = yy;
-	float x = xx;
-	int startpos = x - sqrt(2) / 2 * r;
-	int endpos = x + sqrt(2) / 2 * r;
-	int startposY = y - sqrt(2) / 2 * r;
-	int endposY = y + sqrt(2) / 2 * r;
-	glBegin(GL_POINTS);
-	for (int i = startpos; i <= endpos; i++)
-	{
-		float py = sqrt(r * r - i * i + 2 * x * i - x * x);
-		glPixel(i, round(py + y));
-		glPixel(i, round(-py + y));
-	}
-	for (int i = startposY; i <= endposY; i++)
-	{
-		float px = sqrt(r * r - i * i + 2 * y * i - y * y);
-		glPixel(round(px + x), i);
-		glPixel(round(-px + x), i);
-	}
-	glEnd();
-}
 //画布，用来管理绘图
 Canvas canvas(800, 600, Color(200, 200, 200));
 
-void reshape(int w, int h)
+void _reshape(int w, int h)
 {
-	win_width = w;
-	win_height = h;
+	pre_w = win_w;
+	pre_h = win_h;
+	win_w = w;
+	win_h = h;
 	glViewport(0, 0, w, h);
-	canvas.repaint();
 	if (reshapeFunc)
 		reshapeFunc(w, h);
+	canvas.repaint();
 }

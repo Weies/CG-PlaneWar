@@ -14,10 +14,9 @@ struct Area {
 	Area() { x = 0; y = 0; w = 0; h = 0; }
 	bool inArea(int xx, int yy)
 	{
-		if (x + offsetx < xx && y + offsety < yy
-			&& yy < y + offsety + h && xx < x + offsetx + w)
-			return true;
-		return false;
+		 bool ret = (x + offsetx < xx&& y + offsety < yy
+			&& yy < y + offsety + h && xx < x + offsetx + w);
+		 return ret;
 	}
 
 	void setOffset(int x, int y)//设置响应中心的偏移量
@@ -43,6 +42,10 @@ struct point {
 	point(float xx, float yy) {
 		x = xx;
 		y = yy;
+	}
+	bool operator<(point& otr)
+	{
+		return y < otr.y;
 	}
 	float x, y;
 };
@@ -105,8 +108,8 @@ public:
 	}
 
 	void moveto(int xx, int yy) {
-		posx = xx; posy = yy;
-		area.x = xx; area.y = yy;
+		posx = xx ; posy = yy ;
+		area.x = xx ; area.y = yy ;
 	};
 
 	virtual void rotate(float deg) {};
@@ -170,6 +173,7 @@ void arrangeMove(int x, int y)
 	{
 		if (block.list[i]->area.inArea(x, y))
 		{
+			moveHandled = true;
 			if(block.list[i]->onmove&& block.list[i]->movable)
 			block.list[i]->onmove(x, y);
 			break;
@@ -279,22 +283,18 @@ public:
 
 };
 
-void drawPoint(float x, float y)
-{
-	int xx = round(x);
-	int yy = round(y);
-	glBegin(GL_POINTS);
-	glPixel(xx, yy);
-	glEnd();
-}
 
-void fillRect(int x, int y, int b)
-{
-	glRectf(transX(x * 30), transY(y * 30 + b), transX(x * 30 + 30), transY(y * 30 + b + 30));
-	drawPoint(x * 30, y * 30 + b);
-}
+class Line {
+public:
+	Line(){}
 
-void fillRect(int x, int y, int width, int height)
-{
-	glRectf(transX(x), transY(y), transX(x + width), transY(y + height));
-}
+	Line(int x, int y, int a, int b)
+	{
+		p1.x = x; p1.y = y;
+		p2.x = a; p2.y = b;
+		if (x || y || a || b)need = true;
+	}
+	bool need = false;
+	point p1;
+	point p2;
+};

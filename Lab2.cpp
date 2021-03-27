@@ -9,16 +9,16 @@
 //{
 //	canvas.setColor(250, 250, 250);
 //	glBegin(GL_LINES);
-//	int lines = win_width / width * 100;
+//	int lines = win_w / width * 100;
 //	for (int i = -lines; i <= lines; i++)
 //	{
-//		glPixel(i * 30 + 1, -win_height / scaleTimes);
-//		glPixel(i * 30 + 1, 2 * win_height / scaleTimes);
+//		glPixel(i * 30 + 1, -win_height());
+//		glPixel(i * 30 + 1, 2 * win_height());
 //	}
 //	for (int i = -lines; i <= lines; i++)
 //	{
-//		glPixel(-win_height / scaleTimes, i * 30);
-//		glPixel(2 * win_width / scaleTimes, i * 30);
+//		glPixel(-win_height(), i * 30);
+//		glPixel(2 * win_width(), i * 30);
 //	}
 //	glEnd();
 //}
@@ -26,6 +26,7 @@
 //int x = 0; int y = 0;
 //float rety = 0;
 //float retx;
+//
 //void DDA(float k, float b)
 //{
 //	rety = 0; x = 0; y = 0; retx = 0;
@@ -37,7 +38,7 @@
 //		{
 //			if (y < rety)y++;
 //			rety += k;
-//			fillRect(round(x++), round(y), b);
+//			ptr.fillRect(x++, round(y), b);
 //		}
 //	}
 //	else {
@@ -46,7 +47,7 @@
 //		{
 //			if (x < retx)x++;
 //			retx += 1 / k;
-//			fillRect(round(x), round(y++), b);
+//			ptr.fillRect(x, round(y++), b);
 //		}
 //	}
 //}
@@ -65,12 +66,12 @@
 //			if (p < 0)
 //			{
 //				p += pp;
-//				fillRect(x++, y, b);
+//				ptr.fillRect(x++, y, b);
 //			}
 //			else
 //			{
 //				p += pp - 2.0;
-//				fillRect(x++, ++y, b);
+//				ptr.fillRect(x++, ++y, b);
 //			}
 //		}
 //	}
@@ -82,12 +83,12 @@
 //			if (p < 0)
 //			{
 //				p += pp;
-//				fillRect(x, y++, b);
+//				ptr.fillRect(x, y++, b);
 //			}
 //			else
 //			{
 //				p += pp - 2.0;
-//				fillRect(x++, y++, b);
+//				ptr.fillRect(x++, y++, b);
 //			}
 //		}
 //	}
@@ -101,27 +102,24 @@
 //	float y = yy / 30;
 //	float x = xx / 30;
 //	int startpos = x - sqrt(2) / 2 * r;
-//	int endpos = x + sqrt(2) / 2 * r;
-//	int startposY = y - sqrt(2) / 2 * r;
-//	int endposY = y + sqrt(2) / 2 * r;
-//	for (int i = startpos; i <= endpos; i++)
+//	for (int i = startpos; i <= x; i++)
 //	{
 //		float py = sqrt(r * r - i * i + 2 * x * i - x * x);
-//		fillRect(i, round(py + y), 0);
-//		fillRect(i, round(-py + y), 0);
-//	}
-//	for (int i = startposY; i <= endposY; i++)
-//	{
-//		float px = sqrt(r * r - i * i + 2 * y * i - y * y);
-//		fillRect(round(px + x), i, 0);
-//		fillRect(round(-px + x), i, 0);
+//		ptr.fillRect(i, py + y, 0);
+//		ptr.fillRect(i, -py + y, 0);
+//		ptr.fillRect(2 * x - i, py + y, 0);
+//		ptr.fillRect(2 * x - i, -py + y, 0);
+//		ptr.fillRect(py + x, y + i - x, 0);
+//		ptr.fillRect(py + x, y + x - i, 0);
+//		ptr.fillRect(x - py, y + i - x, 0);
+//		ptr.fillRect(x - py, y + x - i, 0);
 //	}
 //}
 //
 //void draw()
 //{
-//	DDA(2, 0);
-//	bresenham(0.5, 0);
+//	DDA(2, 400);
+//	bresenham(0.5, -300);
 //	drawGrid(30);
 //	canvas.setColor(255, 0, 0);
 //	drawCir(1000, 1000, 1000);
@@ -129,15 +127,15 @@
 //
 //void stickHandler(int b, int state, int xx, int yy)
 //{
-//	if (scaleTimes > 0.001 && b == GLUT_LEFT_BUTTON && state == GLUT_DOWN)scaleTimes *= 0.98;
-//	else if (scaleTimes < 100 && b == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)scaleTimes /= 0.98;
+//	if (scaleTimes > 0.1 && b == GLUT_LEFT_BUTTON && state == GLUT_DOWN)scaleTimes *= 0.98;
+//	else if (scaleTimes < 10 && b == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)scaleTimes /= 0.98;
 //	canvas.repaint();
 //}
 //
 //void mouseMove(int x, int y)
 //{
 //	//glViewport(x-clickX+lastViewX,y-clickY+lastViewY,win_width,win_height);
-//	glTranslated(deltaX / win_width * 2, deltaY / win_height * 2, 0);
+//	glTranslated(deltaX / win_w * 2, deltaY / win_h * 2, 0);
 //	canvas.repaint();
 //}
 //
@@ -150,16 +148,16 @@
 //	btn2.resize(80, 40);
 //	btn.resize(80, 40);
 //	btn.onclick = [=,&btn](int b,int s,int x,int y) {
-//		for (int i = 0; i < 500; i++)
+//		for (int i = 0; i < 100; i++)
 //		{
-//			scaleTimes *= 1.001;
+//			scaleTimes *= 1.005;
 //			canvas.repaint();
 //		}
 //	};
 //	btn2.onclick = [=, &btn](int b,int s,int x, int y) {
-//		for (int i = 0; i < 500; i++)
+//		for (int i = 0; i < 100; i++)
 //		{
-//			scaleTimes *= 0.999;
+//			scaleTimes *= 0.995;
 //			canvas.repaint();
 //		}
 //	};

@@ -1,0 +1,9 @@
+GET /wireshark-labs/HTTP-wireshark-file4.html HTTP/1.1
+Host: gaia.cs.umass.edu
+Connection: keep-alive
+Cache-Control: max-age=0
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.25 Safari/537.36 Core/1.70.3858.400 QQBrowser/10.7.4317.400
+
+
+

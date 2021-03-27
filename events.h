@@ -7,7 +7,7 @@ using namespace globals;
 HHOOK keyHook = NULL;
 HHOOK mouseHook = NULL;
 //声明卸载函数,以便调用
-bool lock = true;
+bool locked = true;
 void unHook();
 //键盘钩子过程
 void setHook();
@@ -21,14 +21,14 @@ LRESULT CALLBACK keyProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	//在WH_KEYBOARD_LL模式下lParam 是指向KBDLLHOOKSTRUCT类型地址
 	KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)lParam;
-	if (pkbhs->vkCode == VK_F12 && lock == true)
+	if (pkbhs->vkCode == VK_F12 && locked == true)
 	{
-		unHook(); lock = false;
+		unHook(); locked = false;
 		//qApp->quit();
 	}
 	else
 	{
-		setHook(); lock = true;
+		setHook(); locked = true;
 	}
 	return 0;//返回1表示截取消息不再传递,返回0表示不作处理,消息继续传递
 }
@@ -37,9 +37,9 @@ LRESULT CALLBACK keyProc(int nCode, WPARAM wParam, LPARAM lParam)
 LRESULT CALLBACK mouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	MSLLHOOKSTRUCT* info = (MSLLHOOKSTRUCT*)lParam;
-	events::doWhenMouseHover(0.8*info->pt.x - glutGet(GLUT_WINDOW_X)
-		, 0.8*info->pt.y - glutGet(GLUT_WINDOW_Y));
-	return 0;
+	events::doWhenMouseHover(0.8 * info->pt.x - glutGet(GLUT_WINDOW_X)
+		, 0.8 * info->pt.y - glutGet(GLUT_WINDOW_Y));
+	return CallNextHookEx(mouseHook, nCode, wParam, lParam);
 }
 
 //卸载钩子
@@ -102,7 +102,9 @@ namespace events {
 
 	DisplayManager displayList;
 
+
 	function<void(int b, int state, int x, int y)> mouseClickHandler = 0;
+	bool moveHandled = false;
 	function<void(int x, int y)> mouseMoveHandler = 0;
 	function<void(int b, int state, int x, int y)> mouseStickHandler;
 	function<void(int x, int y)> mouseHoverHandler = 0;
@@ -128,13 +130,14 @@ namespace events {
 	{
 		if (eventAble)
 		{
+			if (displayFunc)
+				displayFunc();
 			for (int i = 0; i < displayList.Size; i++)
 			{
 				if (displayList.list[i]->showing)
 					displayList.list[i]->draw();
 			}
-			if (displayFunc)
-				displayFunc();
+
 			glFlush();
 		}
 	}
@@ -143,12 +146,15 @@ namespace events {
 	{
 		if (eventAble)
 		{
-			deltaX = x - mouseX; deltaY = win_height - y - mouseY;
-			mouseX = x; mouseY = win_height - y;
+			deltaX = x - mouseX; deltaY = win_h - y - mouseY;
+			cOffsetx += deltaX;
+			cOffsety += deltaY;
+			mouseX = x; mouseY = win_h - y;
 			mouseMoved = true;
+			moveHandled = false;
 			if (arrangeMoveFunc)
 				arrangeMoveFunc(x, mouseY);
-			if (mouseMoveHandler)
+			if (mouseMoveHandler && !moveHandled)
 			{
 				mouseMoveHandler(x, mouseY);
 			}
@@ -173,20 +179,20 @@ namespace events {
 			if (state == GLUT_UP) {
 				sticking = false;
 				lastViewX = x - clickX + lastViewX;
-				lastViewY = win_height - y - clickY + lastViewY;
-				arrangeMouseUpFunc(b, x, win_height - y);
+				lastViewY = win_h - y - clickY + lastViewY;
+				arrangeMouseUpFunc(b, x, win_h - y);
 			}
 			else
 			{
 				sticking = true;
 				mouseMoved = false;
 				mBtn = b; mState = state;
-				clickX = x; clickY = win_height - y;
-				mouseX = x; mouseY = win_height - y;
+				clickX = x; clickY = win_h - y;
+				mouseX = x; mouseY = win_h - y;
 				arrangeClickFunc(b, state, x, mouseY);
 				if (mouseClickHandler)
 					mouseClickHandler(b, state, clickX, clickY);
-				glutTimerFunc(400, doWhenMouseStick, 5566);
+				glutTimerFunc(200, doWhenMouseStick, 5566);
 			}
 		}
 
@@ -218,10 +224,10 @@ namespace events {
 
 	}
 
-	void doWhenMouseHover(int x,int y)
+	void doWhenMouseHover(int x, int y)
 	{
 		if (mouseHoverHandler)
-			mouseHoverHandler(x,win_height- y);
+			mouseHoverHandler(x, win_h - y);
 	}
 
 	void doWhenTimeout(int id)
@@ -240,8 +246,7 @@ namespace events {
 	{
 		if (eventAble) {
 			if (singleTimerFunc)
-				singleTimerFunc(1);
+				singleTimerFunc(id);
 		}
-
 	}
 }
